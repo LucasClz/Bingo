@@ -1,0 +1,1204 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bingo Studio</title>
+
+  <style>
+    :root{
+      --bg0:#070b14; --bg2:#0f1930;
+      --card: rgba(255,255,255,.06);
+      --card2: rgba(255,255,255,.04);
+      --text:#eef2ff; --muted:#a7b2c8;
+
+      --primary:#60a5fa; --primaryBg: rgba(96,165,250,.16);
+      --success:#34d399; --successBg: rgba(52,211,153,.14);
+      --danger:#fb7185; --dangerBg: rgba(251,113,133,.12);
+      --warn:#fbbf24; --warnBg: rgba(251,191,36,.14);
+
+      --shadow: 0 18px 50px rgba(0,0,0,.38);
+      --radius: 16px;
+      --gap: 14px;
+      --focusRing: 0 0 0 4px rgba(96,165,250,.14);
+
+      --headerH: 64px; /* sera recalculé en JS */
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1100px 650px at 12% -10%, rgba(96,165,250,.22), transparent 55%),
+        radial-gradient(900px 520px at 90% 0%, rgba(52,211,153,.16), transparent 55%),
+        linear-gradient(180deg, var(--bg2), var(--bg0));
+      overflow-y:auto;
+    }
+
+    /* HEADER (compact) */
+    .header{
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(16px);
+      background: rgba(7,11,20,.74);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      padding: 8px 12px;               /* ✅ moins haut */
+      display:flex;
+      gap: 8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .brand{
+      display:flex; align-items:center; gap:8px;
+      font-weight: 900;
+      letter-spacing: .2px;
+      margin-right:auto;
+      font-size: 14px;                 /* ✅ plus petit */
+    }
+    .logo{
+      width:28px; height:28px;         /* ✅ plus petit */
+      border-radius: 10px;
+      display:grid; place-items:center;
+      background: linear-gradient(135deg, rgba(96,165,250,.34), rgba(52,211,153,.22));
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 10px 26px rgba(0,0,0,.25);
+      user-select:none;
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:4px 8px;                 /* ✅ plus petit */
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      color: var(--muted);
+      font-size: 11px;                 /* ✅ plus petit */
+      user-select:none;
+      white-space: nowrap;
+    }
+
+    .cluster{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .input{
+      display:flex; align-items:center; gap:6px;
+      padding: 4px;                    /* ✅ plus petit */
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+    }
+    .input:focus-within{ border-color: rgba(96,165,250,.45); box-shadow: var(--focusRing); }
+    .input input{
+      border:none; outline:none; background:transparent;
+      color:var(--text);
+      padding: 6px 8px;
+      width: 140px;                    /* ✅ plus petit */
+      font-weight:850;
+    }
+    .hint{
+      color: var(--muted);
+      font-size: 11px;
+      padding: 0 6px 0 8px;
+      border-left:1px solid rgba(255,255,255,.08);
+      user-select:none;
+    }
+
+    button{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding: 8px 10px;               /* ✅ plus petit */
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight: 850;
+      letter-spacing: .15px;
+      user-select:none;
+      transition: transform .05s ease, background .15s ease, border-color .15s ease;
+      font-size: 12px;                 /* ✅ plus petit */
+      line-height: 1.1;
+    }
+    button:hover{ background: rgba(255,255,255,.09); }
+    button:active{ transform: translateY(1px); }
+
+    .btn-primary{ border-color: rgba(96,165,250,.35); background: var(--primaryBg); }
+    .btn-success{ border-color: rgba(52,211,153,.30); background: var(--successBg); }
+    .btn-danger{ border-color: rgba(251,113,133,.30); background: var(--dangerBg); }
+    .btn-ghost{ background: rgba(255,255,255,.03); }
+
+    /* Derniers tirés (compact, pas une rangée dédiée) */
+    .recentRow{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+      width:auto;                      /* ✅ ne force plus 100% */
+      margin-left:auto;
+    }
+    .chips{
+      display:flex;
+      gap:6px;
+      align-items:center;
+      flex-wrap:wrap;
+      max-width: 360px;                /* ✅ compact */
+    }
+    .chip{
+      display:inline-flex; align-items:center; justify-content:center;
+      min-width: 30px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      font-weight: 900;
+      font-size: 11px;
+      user-select:none;
+      cursor:pointer;
+    }
+    .chip.drawn{
+      border-color: rgba(52,211,153,.35);
+      background: rgba(52,211,153,.14);
+      color: #dcffef;
+    }
+
+    /* Layout */
+    .content{
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap: 14px;
+      padding: 14px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .content{ grid-template-columns:1fr; }
+      .recentRow{ width:100%; margin-left:0; }
+      .chips{ max-width: 100%; }
+    }
+
+    /* Sidebar sticky + scrollable */
+    .sidebar{
+      position: sticky;
+      top: calc(var(--headerH) + 12px);
+      max-height: calc(100vh - var(--headerH) - 24px);
+      overflow: auto;
+      padding-right: 6px;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+    .sidebar::-webkit-scrollbar{ width: 10px; }
+    .sidebar::-webkit-scrollbar-thumb{
+      background: rgba(255,255,255,.12);
+      border: 2px solid rgba(0,0,0,0);
+      background-clip: padding-box;
+      border-radius: 999px;
+    }
+
+    .panel{
+      background: linear-gradient(180deg, var(--card), var(--card2));
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      margin-bottom: 14px;
+    }
+    .ph{
+      padding: 10px 12px;              /* ✅ plus petit */
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      background: rgba(0,0,0,.18);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .ph h2{ margin:0; font-size: 13px; letter-spacing: .25px; }
+    .pb{ padding: 12px; }
+
+    label{ display:block; font-size: 12px; color: var(--muted); margin: 10px 0 6px; }
+    input[type="number"], input[type="text"], select, textarea{
+      width:100%;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      padding: 10px 12px;
+      outline:none;
+      color: var(--text);
+    }
+    input[type="number"]:focus, input[type="text"]:focus, select:focus, textarea:focus{
+      border-color: rgba(96,165,250,.45);
+      box-shadow: var(--focusRing);
+    }
+    textarea{ min-height: 88px; resize: vertical; }
+
+    .row{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .divider{ height:1px; background: rgba(255,255,255,.08); margin: 12px 0; }
+    .help{ font-size: 12px; color: var(--muted); line-height:1.45; }
+    .actions{ display:flex; gap:10px; flex-wrap:wrap; }
+    .actions > button{ flex:1; min-width: 140px; }
+
+    /* Boards */
+    .boardsShell{
+      background: linear-gradient(180deg, var(--card), var(--card2));
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .boardsShell .pb{ padding:12px; }
+
+    .boards{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 14px;
+    }
+
+    /* Focus rules */
+    body.focus .content{ grid-template-columns: 1fr; }
+    body.focus .sidebar{ display:none; }
+    body.focus .boards{ grid-template-columns: repeat(12, minmax(0, 1fr)); }
+    body.focus .board.ticket-3x10{ grid-column: span 4; }
+    body.focus .board.ticket-large{ grid-column: 1 / -1; }
+    body.focus .board.ticket-other{ grid-column: span 6; }
+
+    .board{
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.16);
+      overflow:hidden;
+    }
+    .board .top{
+      padding: 10px 10px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      background: rgba(0,0,0,.14);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .board .title{ display:flex; flex-direction:column; gap:2px; }
+    .board .title strong{ font-size: 13px; letter-spacing:.15px; }
+    .board .title small{ color: var(--muted); }
+    .board .btns{ display:flex; gap:8px; }
+
+    table.ticket{
+      width:100%;
+      border-collapse: separate;
+      border-spacing: 6px;
+      padding: 10px;
+    }
+    table.ticket td{
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      border-radius: 12px;
+      text-align:center;
+      font-weight: 900;
+      padding: 12px 0;
+      user-select:none;
+      position:relative;
+      cursor:pointer;
+    }
+    table.ticket td:hover{
+      border-color: rgba(96,165,250,.28);
+      background: rgba(96,165,250,.06);
+    }
+    table.ticket td.marked{
+      background: rgba(52,211,153,.16);
+      border-color: rgba(52,211,153,.35);
+    }
+    table.ticket td.marked:after{
+      content:"✓";
+      position:absolute;
+      right:8px; top:6px;
+      font-size:12px;
+      color: rgba(52,211,153,.95);
+    }
+    table.ticket td.empty{ color: rgba(255,255,255,.20); cursor:default; }
+
+    .status{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      padding: 0 10px 10px;
+    }
+    .tag{
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      user-select:none;
+    }
+    .tag.good{ border-color: rgba(52,211,153,.35); background: var(--successBg); color:#d7ffe9; }
+    .tag.warn{ border-color: rgba(251,191,36,.35); background: var(--warnBg); color:#fff3c7; }
+
+    /* Drawer */
+    .drawer{
+      margin-top: 14px;
+      background: rgba(7,11,20,.72);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      padding: 10px 14px;
+    }
+    .drawerHeader{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      flex-wrap:wrap;
+    }
+    .drawerBody{ margin-top:10px; display:none; }
+    .drawer.open .drawerBody{ display:block; }
+
+    .numbers-grid{
+      display:grid;
+      grid-template-columns: repeat(15, minmax(0, 1fr));
+      gap: 8px;
+    }
+    @media (max-width: 980px){
+      .numbers-grid{ grid-template-columns: repeat(10, minmax(0, 1fr)); }
+    }
+    .num{
+      text-align:center;
+      padding: 10px 0;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      cursor:pointer;
+      font-weight: 900;
+      font-size: 12px;
+      user-select:none;
+    }
+    .num.drawn{
+      background: rgba(52,211,153,.16);
+      border-color: rgba(52,211,153,.35);
+      color:#dcffef;
+    }
+
+    /* Modal */
+    #modal{
+      display:none;
+      position:fixed;
+      inset:0;
+      z-index:60;
+      background: rgba(0,0,0,.62);
+      padding: 16px;
+    }
+    #modal .inner{
+      max-width: 980px;
+      margin: 40px auto;
+      background: rgba(8,12,20,.96);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    #modal .mh{
+      padding: 10px 12px;
+      display:flex; align-items:center; justify-content:space-between;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+    }
+    #modal .mb{ padding: 12px; }
+    #editorGrid{ display:grid; gap: 8px; }
+
+    .toast{
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      max-width: 420px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(251,113,133,.40);
+      background: rgba(251,113,133,.16);
+      color: #ffe7ec;
+      box-shadow: var(--shadow);
+      display:none;
+      z-index: 80;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header" id="header">
+    <div class="brand">
+      <div class="logo">🎱</div>
+      Bingo Studio
+      <span class="pill" id="statsPill">0 plaquette • 0 tiré</span>
+    </div>
+
+    <div class="cluster">
+      <div class="input" title="Entrée = cocher">
+        <input id="drawInput" type="number" inputmode="numeric" placeholder="Numéro…" />
+        <span class="hint">Entrée</span>
+      </div>
+
+      <button class="btn-primary" id="drawBtn">Cocher</button>
+      <button class="btn-ghost" id="removeBtn">Décocher</button>
+      <button class="btn-ghost" id="undoBtn" title="Ctrl+Z">Undo</button>
+      <button class="btn-ghost" id="clearBtn">Clear</button>
+      <button class="btn-success" id="randomBtn">Aléatoire</button>
+
+      <span class="pill">Max
+        <input id="maxNumber" type="number" value="90" min="1" max="999"
+               style="width:72px; padding:5px 8px; border-radius:10px;">
+      </span>
+
+      <button class="btn-ghost" id="drawerToggle" title="G">Tableau</button>
+      <button class="btn-primary" id="focusToggle" title="F">Focus</button>
+    </div>
+
+    <div class="recentRow">
+      <span class="pill">Derniers</span>
+      <div class="chips" id="recentChips"></div>
+    </div>
+  </div>
+
+  <div class="content">
+    <aside class="sidebar" id="sidebar">
+      <div class="panel">
+        <div class="ph"><h2>Gestion des plaquettes</h2></div>
+        <div class="pb">
+          <label>Nom</label>
+          <input id="boardName" type="text" placeholder="Ex: Plaquette 1" />
+
+          <div class="row" style="margin-top:10px;">
+            <div>
+              <label>Lignes</label>
+              <input id="rows" type="number" min="1" value="3" />
+            </div>
+            <div>
+              <label>Colonnes</label>
+              <input id="cols" type="number" min="1" value="10" />
+            </div>
+          </div>
+
+          <label style="margin-top:10px;">Préset</label>
+          <select id="preset">
+            <option value="">—</option>
+            <option value="3x10">3 × 10</option>
+            <option value="5x5">5 × 5</option>
+            <option value="4x4">4 × 4</option>
+          </select>
+
+          <div class="divider"></div>
+
+          <div class="help">
+            <strong>Remplir les nombres :</strong><br>
+            • “Éditer la grille” (case par case)<br>
+            • ou colle une liste (espaces/virgules/retours ligne)
+          </div>
+
+          <div class="actions" style="margin-top:10px;">
+            <button class="btn-ghost" id="editGridBtn">Éditer la grille</button>
+          </div>
+
+          <label>Liste (optionnel)</label>
+          <textarea id="bulkNumbers" placeholder="Ex: 1 8 12 33 47 ..."></textarea>
+
+          <div class="actions" style="margin-top:10px;">
+            <button class="btn-success" id="createBtn">Créer</button>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row" style="margin-top:10px;">
+            <div>
+              <label>Règle Bingo</label>
+              <select id="ruleMode">
+                <option value="row">Ligne</option>
+                <option value="col">Colonne</option>
+                <option value="rowcol">Ligne ou Colonne</option>
+                <option value="diag">Diagonale</option>
+                <option value="rowcoldiag">Ligne/Colonne/Diagonale</option>
+                <option value="full">Carton plein</option>
+              </select>
+            </div>
+            <div>
+              <label>Afficher 0</label>
+              <select id="showZeros">
+                <option value="yes">Oui</option>
+                <option value="no">Non</option>
+              </select>
+            </div>
+          </div>
+
+          <label style="margin-top:10px;">Filtrer</label>
+          <input id="filterBoards" type="text" placeholder="Rechercher par nom…" />
+
+          <div class="divider"></div>
+
+          <div class="actions">
+            <button class="btn-ghost" id="exportBtn">Exporter JSON</button>
+            <button class="btn-ghost" id="importBtn">Importer JSON</button>
+            <button class="btn-danger" id="resetAllBtn">Reset total</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="boardsShell">
+        <div class="ph">
+          <h2>Mes plaquettes</h2>
+          <span class="pill">Clique une case = toggle du numéro</span>
+        </div>
+        <div class="pb">
+          <div class="boards" id="boards"></div>
+        </div>
+      </div>
+
+      <div class="drawer" id="drawer">
+        <div class="drawerHeader">
+          <div class="pill">Tableau des numéros</div>
+          <div class="cluster">
+            <div class="pill">Clique = cocher/décocher</div>
+            <button class="btn-ghost" id="drawerClose">Fermer</button>
+          </div>
+        </div>
+        <div class="drawerBody" id="drawerBody">
+          <div class="numbers-grid" id="numbersGrid"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL -->
+  <div id="modal">
+    <div class="inner">
+      <div class="mh">
+        <strong id="modalTitle">Édition de la grille</strong>
+        <button class="btn-ghost" id="modalClose">Fermer</button>
+      </div>
+      <div class="mb">
+        <div class="help" style="margin-bottom:10px;">
+          Mets <b>0</b> pour une case vide. Clique “Appliquer” pour enregistrer.
+        </div>
+        <div id="editorGrid"></div>
+        <div class="actions" style="margin-top:12px;">
+          <button class="btn-primary" id="applyGridBtn">Appliquer</button>
+          <button class="btn-ghost" id="fillFromBulkBtn">Depuis la liste</button>
+          <button class="btn-danger" id="clearEditorBtn">Vider</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <input id="fileInput" type="file" accept="application/json" style="display:none;" />
+  <div class="toast" id="toast"></div>
+
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      // Mesure header -> sidebar sticky/max-height + variable CSS
+      const header = document.getElementById("header");
+      const setHeaderH = () => {
+        const h = header.getBoundingClientRect().height;
+        document.documentElement.style.setProperty("--headerH", Math.ceil(h) + "px");
+      };
+      setHeaderH();
+      window.addEventListener("resize", setHeaderH);
+
+      const STORAGE_KEY = "bingo_studio_compact_header_v1";
+
+      const state = {
+        boards: [],
+        drawn: new Set(),
+        drawnOrder: [],
+        editor: { rows: 3, cols: 10, numbers: [] },
+        ui: { focus:false, drawerOpen:false, showZeros:true, ruleMode:"row" }
+      };
+
+      const $ = (id) => document.getElementById(id);
+
+      function toast(msg){
+        const t = $("toast");
+        t.textContent = msg;
+        t.style.display = "block";
+        clearTimeout(toast._t);
+        toast._t = setTimeout(() => t.style.display = "none", 4200);
+      }
+
+      const uid = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
+      const clampInt = (n, min, max) => {
+        n = Math.floor(Number(n));
+        if(!Number.isFinite(n)) return min;
+        return Math.min(max, Math.max(min, n));
+      };
+      const parseBulkNumbers = (text) => text
+        .split(/[\s,;]+/g).map(s=>s.trim()).filter(Boolean)
+        .map(Number).filter(Number.isFinite);
+
+      const escapeHtml = (s) => String(s).replace(/[&<>"']/g, m => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      }[m]));
+
+      function save(){
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          boards: state.boards,
+          drawn: Array.from(state.drawn),
+          drawnOrder: state.drawnOrder,
+          editor: state.editor,
+          ui: state.ui
+        }));
+      }
+
+      function load(){
+        try{
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if(!raw) return;
+          const data = JSON.parse(raw);
+          state.boards = Array.isArray(data.boards) ? data.boards : [];
+          state.drawn = new Set(Array.isArray(data.drawn) ? data.drawn : []);
+          state.drawnOrder = Array.isArray(data.drawnOrder) ? data.drawnOrder : [];
+          if(data.editor) state.editor = data.editor;
+          if(data.ui) state.ui = {...state.ui, ...data.ui};
+          state.boards.forEach(recomputeMarkedForBoard);
+        }catch(e){ console.warn(e); }
+      }
+
+      function updateStats(){
+        $("statsPill").textContent =
+          `${state.boards.length} plaquette${state.boards.length>1?"s":""} • ${state.drawn.size} tiré${state.drawn.size>1?"s":""}`;
+      }
+
+      function renderRecent(){
+        const wrap = $("recentChips");
+        wrap.innerHTML = "";
+        const last = state.drawnOrder.slice(-10).reverse();
+        if(last.length === 0){
+          const s = document.createElement("span");
+          s.className = "pill";
+          s.textContent = "—";
+          wrap.appendChild(s);
+          return;
+        }
+        for(const n of last){
+          const c = document.createElement("span");
+          c.className = "chip drawn";
+          c.textContent = n;
+          c.title = "Clique pour décocher";
+          c.addEventListener("click", () => removeDraw(n));
+          wrap.appendChild(c);
+        }
+      }
+
+      function recomputeMarkedForBoard(board){
+        const total = board.rows * board.cols;
+        board.marked = new Array(total).fill(false);
+        for(let i=0;i<total;i++){
+          const n = Number(board.numbers[i]);
+          if(Number.isFinite(n) && state.drawn.has(n)) board.marked[i] = true;
+        }
+      }
+      function applyDrawnToAllBoards(){ state.boards.forEach(recomputeMarkedForBoard); }
+
+      function isBingo(board){
+        const {rows, cols, marked} = board;
+        const mode = state.ui.ruleMode;
+
+        const checkRow = () => {
+          for(let r=0;r<rows;r++){
+            let ok=true;
+            for(let c=0;c<cols;c++){ if(!marked[r*cols+c]) { ok=false; break; } }
+            if(ok) return true;
+          }
+          return false;
+        };
+        const checkCol = () => {
+          for(let c=0;c<cols;c++){
+            let ok=true;
+            for(let r=0;r<rows;r++){ if(!marked[r*cols+c]) { ok=false; break; } }
+            if(ok) return true;
+          }
+          return false;
+        };
+        const checkDiag = () => {
+          if(rows !== cols) return false;
+          let ok1=true, ok2=true;
+          for(let i=0;i<rows;i++){
+            if(!marked[i*cols+i]) ok1=false;
+            if(!marked[i*cols+(cols-1-i)]) ok2=false;
+          }
+          return ok1 || ok2;
+        };
+
+        const full = marked.every(Boolean);
+        if(mode === "full") return full;
+
+        const row = checkRow();
+        const col = checkCol();
+        const diag = checkDiag();
+
+        if(mode === "row") return row;
+        if(mode === "col") return col;
+        if(mode === "rowcol") return row || col;
+        if(mode === "diag") return diag;
+        if(mode === "rowcoldiag") return row || col || diag;
+        return row;
+      }
+
+      function boardClasses(b){
+        const cells = b.rows * b.cols;
+        if(b.rows === 3 && b.cols === 10) return "ticket-3x10";
+        if(cells > 30) return "ticket-large";
+        return "ticket-other";
+      }
+
+      function renderBoards(){
+        const wrap = $("boards");
+        wrap.innerHTML = "";
+        const filter = ($("filterBoards").value || "").trim().toLowerCase();
+        const list = state.boards.filter(b => !filter || (b.name||"").toLowerCase().includes(filter));
+
+        if(list.length === 0){
+          const empty = document.createElement("div");
+          empty.className = "help";
+          empty.style.padding = "10px";
+          empty.textContent = filter ? "Aucune plaquette ne correspond au filtre." : "Aucune plaquette. Crée-en une à gauche.";
+          wrap.appendChild(empty);
+          return;
+        }
+
+        for(const b of list){
+          const card = document.createElement("div");
+          card.className = `board ${boardClasses(b)}`;
+
+          const top = document.createElement("div");
+          top.className = "top";
+
+          const title = document.createElement("div");
+          title.className = "title";
+          title.innerHTML = `<strong>${escapeHtml(b.name||"Plaquette")}</strong><small>${b.rows}×${b.cols}</small>`;
+
+          const btns = document.createElement("div");
+          btns.className = "btns";
+
+          const edit = document.createElement("button");
+          edit.className = "btn-ghost";
+          edit.textContent = "Modifier";
+          edit.addEventListener("click", () => editBoard(b.id));
+
+          const del = document.createElement("button");
+          del.className = "btn-danger";
+          del.textContent = "Suppr.";
+          del.addEventListener("click", () => {
+            if(!confirm(`Supprimer "${b.name||"Plaquette"}" ?`)) return;
+            state.boards = state.boards.filter(x => x.id !== b.id);
+            save(); updateStats(); renderBoards();
+          });
+
+          btns.appendChild(edit);
+          btns.appendChild(del);
+          top.appendChild(title);
+          top.appendChild(btns);
+
+          const table = document.createElement("table");
+          table.className = "ticket";
+          const tbody = document.createElement("tbody");
+
+          for(let r=0;r<b.rows;r++){
+            const tr = document.createElement("tr");
+            for(let c=0;c<b.cols;c++){
+              const i = r*b.cols+c;
+              const td = document.createElement("td");
+              const val = Number(b.numbers[i]);
+              const isZero = (val === 0);
+
+              if(isZero && state.ui.showZeros === false){
+                td.textContent = "";
+                td.classList.add("empty");
+              } else {
+                td.textContent = Number.isFinite(val) ? String(val) : "";
+                if(isZero) td.classList.add("empty");
+              }
+
+              if(b.marked[i]) td.classList.add("marked");
+
+              td.addEventListener("click", () => {
+                if(!Number.isFinite(val) || val === 0) return;
+                toggleDraw(val);
+              });
+
+              tr.appendChild(td);
+            }
+            tbody.appendChild(tr);
+          }
+          table.appendChild(tbody);
+
+          const status = document.createElement("div");
+          status.className = "status";
+
+          const bingo = isBingo(b);
+          const full = b.marked.every(Boolean);
+
+          const t1 = document.createElement("span");
+          t1.className = "tag" + (bingo ? " warn" : "");
+          t1.textContent = bingo ? "BINGO ✅" : "Bingo : non";
+
+          const t2 = document.createElement("span");
+          t2.className = "tag" + (full ? " good" : "");
+          t2.textContent = full ? "Carton plein ✅" : "Carton : non";
+
+          status.appendChild(t1);
+          status.appendChild(t2);
+
+          card.appendChild(top);
+          card.appendChild(table);
+          card.appendChild(status);
+          wrap.appendChild(card);
+        }
+      }
+
+      function renderNumbersGrid(){
+        const max = clampInt($("maxNumber").value || 90, 1, 999);
+        const grid = $("numbersGrid");
+        grid.innerHTML = "";
+        for(let n=1;n<=max;n++){
+          const d = document.createElement("div");
+          d.className = "num" + (state.drawn.has(n) ? " drawn" : "");
+          d.textContent = n;
+          d.addEventListener("click", () => toggleDraw(n));
+          grid.appendChild(d);
+        }
+      }
+
+      function toggleDraw(n){
+        n = Number(n);
+        if(!Number.isFinite(n) || n <= 0) return;
+
+        if(state.drawn.has(n)){
+          state.drawn.delete(n);
+          state.drawnOrder = state.drawnOrder.filter(x => x !== n);
+        } else {
+          state.drawn.add(n);
+          state.drawnOrder.push(n);
+        }
+        applyDrawnToAllBoards();
+        save(); updateStats(); renderRecent(); renderNumbersGrid(); renderBoards();
+      }
+
+      function addDraw(n){
+        n = Number(n);
+        if(!Number.isFinite(n) || n <= 0 || state.drawn.has(n)) return;
+        state.drawn.add(n);
+        state.drawnOrder.push(n);
+        applyDrawnToAllBoards();
+        save(); updateStats(); renderRecent(); renderNumbersGrid(); renderBoards();
+      }
+
+      function removeDraw(n){
+        n = Number(n);
+        if(!Number.isFinite(n) || !state.drawn.has(n)) return;
+        state.drawn.delete(n);
+        state.drawnOrder = state.drawnOrder.filter(x => x !== n);
+        applyDrawnToAllBoards();
+        save(); updateStats(); renderRecent(); renderNumbersGrid(); renderBoards();
+      }
+
+      function undo(){
+        const last = state.drawnOrder[state.drawnOrder.length - 1];
+        if(last === undefined) return;
+        removeDraw(last);
+      }
+
+      function clearDraw(){
+        if(state.drawn.size === 0) return;
+        if(!confirm("Effacer tous les numéros tirés ?")) return;
+        state.drawn.clear();
+        state.drawnOrder = [];
+        applyDrawnToAllBoards();
+        save(); updateStats(); renderRecent(); renderNumbersGrid(); renderBoards();
+      }
+
+      function randomDraw(){
+        const max = clampInt($("maxNumber").value || 90, 1, 999);
+        const candidates = [];
+        for(let i=1;i<=max;i++) if(!state.drawn.has(i)) candidates.push(i);
+        if(candidates.length === 0) return;
+        addDraw(candidates[Math.floor(Math.random()*candidates.length)]);
+      }
+
+      // Modal editor
+      function openModal(){ $("modal").style.display = "block"; }
+      function closeModal(){ $("modal").style.display = "none"; }
+
+      function buildEditorGrid(rows, cols, seedNumbers){
+        const grid = $("editorGrid");
+        grid.innerHTML = "";
+        grid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+
+        const total = rows*cols;
+        state.editor.rows = rows;
+        state.editor.cols = cols;
+        state.editor.numbers = new Array(total).fill("");
+
+        if(Array.isArray(seedNumbers) && seedNumbers.length === total){
+          for(let i=0;i<total;i++) state.editor.numbers[i] = seedNumbers[i];
+        }
+
+        for(let i=0;i<total;i++){
+          const inp = document.createElement("input");
+          inp.type = "number";
+          inp.placeholder = "…";
+          inp.value = state.editor.numbers[i] ?? "";
+          inp.addEventListener("input", () => {
+            state.editor.numbers[i] = inp.value === "" ? "" : Number(inp.value);
+          });
+          grid.appendChild(inp);
+        }
+      }
+
+      function numbersFromEditor(){
+        const total = state.editor.rows * state.editor.cols;
+        const out = new Array(total).fill(0);
+        for(let i=0;i<total;i++){
+          const v = state.editor.numbers[i];
+          out[i] = (v === "" || v === null || v === undefined) ? 0 : Number(v);
+          if(!Number.isFinite(out[i])) out[i] = 0;
+        }
+        return out;
+      }
+
+      let mode = "create";
+      let editingId = null;
+
+      function createBoard(){
+        const name = ($("boardName").value || "").trim() || `Plaquette ${state.boards.length+1}`;
+        const rows = clampInt($("rows").value, 1, 40);
+        const cols = clampInt($("cols").value, 1, 40);
+        const total = rows*cols;
+
+        const bulk = parseBulkNumbers($("bulkNumbers").value);
+        let nums = [];
+
+        if(state.editor.rows === rows && state.editor.cols === cols && state.editor.numbers.length === total){
+          const hasAny = state.editor.numbers.some(v => v !== "" && v !== null && v !== undefined);
+          if(hasAny) nums = numbersFromEditor();
+        }
+        if(nums.length === 0 && bulk.length >= total) nums = bulk.slice(0,total);
+
+        if(nums.length === 0 && bulk.length === 0){
+          const ok = confirm("Aucun nombre saisi (éditeur + liste). Créer quand même une plaquette vide ?");
+          if(!ok) return;
+          nums = new Array(total).fill(0);
+        }
+
+        if(nums.length < total) nums = nums.concat(new Array(total - nums.length).fill(0));
+        nums = nums.slice(0,total);
+
+        const board = { id: uid(), name, rows, cols, numbers: nums.map(Number), marked: new Array(total).fill(false) };
+        recomputeMarkedForBoard(board);
+        state.boards.push(board);
+
+        $("boardName").value = "";
+        save(); updateStats(); renderBoards();
+      }
+
+      function editBoard(id){
+        const b = state.boards.find(x => x.id === id);
+        if(!b) return;
+
+        $("boardName").value = b.name;
+        $("rows").value = b.rows;
+        $("cols").value = b.cols;
+
+        $("modalTitle").textContent = `Modifier • ${b.name}`;
+        buildEditorGrid(b.rows, b.cols, b.numbers.map(n => n));
+        mode = "edit";
+        editingId = id;
+        openModal();
+      }
+
+      function applyEditor(){
+        const rows = clampInt($("rows").value, 1, 40);
+        const cols = clampInt($("cols").value, 1, 40);
+
+        if(mode === "create"){ closeModal(); return; }
+
+        const b = state.boards.find(x => x.id === editingId);
+        if(!b){ closeModal(); return; }
+
+        const total = rows*cols;
+        let nums = numbersFromEditor();
+        if(nums.length < total) nums = nums.concat(new Array(total - nums.length).fill(0));
+        nums = nums.slice(0,total);
+
+        b.rows = rows;
+        b.cols = cols;
+        b.name = ($("boardName").value || "").trim() || b.name;
+        b.numbers = nums.map(Number);
+
+        recomputeMarkedForBoard(b);
+        save(); updateStats(); renderBoards();
+        mode = "create"; editingId = null;
+        closeModal();
+      }
+
+      function fillEditorFromBulk(){
+        const bulk = parseBulkNumbers($("bulkNumbers").value);
+        const total = state.editor.rows * state.editor.cols;
+        if(bulk.length === 0){ toast("Aucun nombre détecté dans la liste."); return; }
+        const inputs = $("editorGrid").querySelectorAll("input");
+        for(let i=0;i<total;i++){
+          const val = bulk[i] ?? 0;
+          inputs[i].value = val;
+          state.editor.numbers[i] = val;
+        }
+      }
+
+      function clearEditor(){
+        const inputs = $("editorGrid").querySelectorAll("input");
+        inputs.forEach(inp => inp.value = "");
+        state.editor.numbers = state.editor.numbers.map(() => "");
+      }
+
+      function exportJSON(){
+        const data = { version:1, exportedAt:new Date().toISOString(), boards: state.boards, drawn:Array.from(state.drawn), drawnOrder: state.drawnOrder, ui: state.ui };
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = "bingo_export.json";
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(url);
+      }
+
+      function importJSONFile(file){
+        const reader = new FileReader();
+        reader.onload = () => {
+          try{
+            const data = JSON.parse(reader.result);
+            if(!data || !Array.isArray(data.boards)) throw new Error("Format invalide");
+            state.boards = data.boards;
+            state.drawn = new Set(Array.isArray(data.drawn) ? data.drawn : []);
+            state.drawnOrder = Array.isArray(data.drawnOrder) ? data.drawnOrder : [];
+            state.ui = {...state.ui, ...(data.ui || {})};
+            state.boards.forEach(recomputeMarkedForBoard);
+            save(); applyUI(); updateStats(); renderRecent(); renderNumbersGrid(); renderBoards();
+          }catch(e){ toast("Import impossible : " + e.message); }
+        };
+        reader.readAsText(file);
+      }
+
+      function resetAll(){
+        if(!confirm("Tout supprimer (plaquettes + tirage) ?")) return;
+        state.boards = [];
+        state.drawn.clear();
+        state.drawnOrder = [];
+        localStorage.removeItem(STORAGE_KEY);
+        save(); applyUI(); updateStats(); renderRecent(); renderNumbersGrid(); renderBoards();
+      }
+
+      function applyUI(){
+        if(state.ui.focus) document.body.classList.add("focus");
+        else document.body.classList.remove("focus");
+
+        const drawer = $("drawer");
+        if(state.ui.drawerOpen) drawer.classList.add("open");
+        else drawer.classList.remove("open");
+
+        state.ui.showZeros = ($("showZeros").value === "yes");
+        state.ui.ruleMode = $("ruleMode").value;
+
+        $("drawerBody").style.display = state.ui.drawerOpen ? "block" : "none";
+      }
+
+      function toggleFocus(){
+        state.ui.focus = !state.ui.focus;
+        applyUI(); save(); renderBoards();
+        $("drawInput").focus();
+      }
+
+      function toggleDrawer(){
+        state.ui.drawerOpen = !state.ui.drawerOpen;
+        applyUI(); save();
+      }
+
+      function initEvents(){
+        $("drawBtn").addEventListener("click", () => { addDraw($("drawInput").value); $("drawInput").value=""; $("drawInput").focus(); });
+        $("removeBtn").addEventListener("click", () => { removeDraw($("drawInput").value); $("drawInput").value=""; $("drawInput").focus(); });
+        $("undoBtn").addEventListener("click", undo);
+        $("clearBtn").addEventListener("click", clearDraw);
+        $("randomBtn").addEventListener("click", randomDraw);
+
+        $("drawInput").addEventListener("keydown", (e) => { if(e.key === "Enter"){ e.preventDefault(); $("drawBtn").click(); } });
+
+        $("maxNumber").addEventListener("change", () => { renderNumbersGrid(); save(); });
+
+        $("drawerToggle").addEventListener("click", toggleDrawer);
+        $("drawerClose").addEventListener("click", () => { state.ui.drawerOpen=false; applyUI(); save(); });
+
+        $("focusToggle").addEventListener("click", toggleFocus);
+
+        $("preset").addEventListener("change", () => {
+          const v = $("preset").value;
+          if(!v) return;
+          const [r,c] = v.split("x").map(Number);
+          if(Number.isFinite(r) && Number.isFinite(c)){
+            $("rows").value = r;
+            $("cols").value = c;
+            state.editor = { rows: r, cols: c, numbers: [] };
+            save();
+          }
+        });
+
+        $("editGridBtn").addEventListener("click", () => {
+          const rows = clampInt($("rows").value, 1, 40);
+          const cols = clampInt($("cols").value, 1, 40);
+          $("modalTitle").textContent = "Éditer la grille (création)";
+          buildEditorGrid(rows, cols);
+          mode = "create";
+          editingId = null;
+          openModal();
+        });
+
+        $("createBtn").addEventListener("click", createBoard);
+        $("filterBoards").addEventListener("input", renderBoards);
+
+        $("ruleMode").addEventListener("change", () => { applyUI(); save(); renderBoards(); });
+        $("showZeros").addEventListener("change", () => { applyUI(); save(); renderBoards(); });
+
+        $("exportBtn").addEventListener("click", exportJSON);
+        $("importBtn").addEventListener("click", () => $("fileInput").click());
+        $("fileInput").addEventListener("change", (e) => {
+          const f = e.target.files?.[0];
+          if(f) importJSONFile(f);
+          e.target.value = "";
+        });
+
+        $("resetAllBtn").addEventListener("click", resetAll);
+
+        $("applyGridBtn").addEventListener("click", applyEditor);
+        $("fillFromBulkBtn").addEventListener("click", fillEditorFromBulk);
+        $("clearEditorBtn").addEventListener("click", clearEditor);
+
+        $("modalClose").addEventListener("click", closeModal);
+        $("modal").addEventListener("click", (e) => { if(e.target.id === "modal") closeModal(); });
+
+        window.addEventListener("keydown", (e) => {
+          const tag = document.activeElement?.tagName?.toLowerCase?.() || "";
+          const typing = (tag === "input" || tag === "textarea" || tag === "select");
+          if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z"){ e.preventDefault(); undo(); return; }
+          if(!typing){
+            if(e.key.toLowerCase() === "f"){ e.preventDefault(); toggleFocus(); }
+            if(e.key.toLowerCase() === "g"){ e.preventDefault(); toggleDrawer(); }
+            if(e.key === "/"){ e.preventDefault(); $("filterBoards").focus(); }
+          }
+        });
+      }
+
+      load();
+      $("ruleMode").value = state.ui.ruleMode || "row";
+      $("showZeros").value = (state.ui.showZeros === false) ? "no" : "yes";
+      applyUI();
+      initEvents();
+      updateStats();
+      renderRecent();
+      renderNumbersGrid();
+      renderBoards();
+      $("drawInput").focus();
+    });
+  </script>
+</body>
+</html>
