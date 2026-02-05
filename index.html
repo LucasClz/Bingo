@@ -572,13 +572,7 @@
             </div>
           </div>
 
-          <label style="margin-top:10px;">Préset</label>
-          <select id="preset">
-            <option value="">—</option>
-            <option value="3x10">3 × 10</option>
-            <option value="5x5">5 × 5</option>
-            <option value="4x4">4 × 4</option>
-          </select>
+          <!-- Préset supprimé pour mobile -->
 
           <div class="divider"></div>
 
@@ -592,8 +586,7 @@
             <button class="btn-ghost" id="editGridBtn">Éditer la grille</button>
           </div>
 
-          <label>Liste (optionnel)</label>
-          <textarea id="bulkNumbers" placeholder="Ex: 1 8 12 33 47 ..."></textarea>
+          <!-- Liste (optionnel) supprimée -->
 
           <div class="actions" style="margin-top:10px;">
             <button class="btn-success" id="createBtn">Créer</button>
@@ -622,14 +615,12 @@
             </div>
           </div>
 
-          <label style="margin-top:10px;">Filtrer</label>
-          <input id="filterBoards" type="text" placeholder="Rechercher par nom…" />
+          <!-- Filtrer supprimé -->
 
           <div class="divider"></div>
 
           <div class="actions">
-            <button class="btn-ghost" id="exportBtn">Exporter JSON</button>
-            <button class="btn-ghost" id="importBtn">Importer JSON</button>
+            <!-- Export/Import supprimés -->
             <button class="btn-danger" id="resetAllBtn">Reset total</button>
           </div>
         </div>
@@ -1071,7 +1062,7 @@
         const cols = clampInt($("cols").value, 1, 40);
         const total = rows*cols;
 
-        const bulk = parseBulkNumbers($("bulkNumbers").value);
+        const bulk = parseBulkNumbers(($("bulkNumbers")?.value) || "");
         let nums = [];
 
         if(state.editor.rows === rows && state.editor.cols === cols && state.editor.numbers.length === total){
@@ -1138,7 +1129,7 @@
       }
 
       function fillEditorFromBulk(){
-        const bulk = parseBulkNumbers($("bulkNumbers").value);
+        const bulk = parseBulkNumbers(($("bulkNumbers")?.value) || "");
         const total = state.editor.rows * state.editor.cols;
         if(bulk.length === 0){ toast("Aucun nombre détecté dans la liste."); return; }
         const inputs = $("editorGrid").querySelectorAll("input");
@@ -1226,26 +1217,29 @@ else drawer.classList.remove("open");
 
         $("drawInput").addEventListener("keydown", (e) => { if(e.key === "Enter"){ e.preventDefault(); $("drawBtn").click(); } });
 
-        $("maxNumber").addEventListener("change", () => { renderNumbersGrid(); save(); });
+        $("maxNumber")?.addEventListener("change", () => { renderNumbersGrid(); save(); });
 
-        $("drawerToggle").addEventListener("click", toggleDrawer);
-        $("drawerClose").addEventListener("click", () => { state.ui.drawerOpen=false; applyUI(); save(); });
+        $("drawerToggle")?.addEventListener("click", toggleDrawer);
+        $("drawerClose")?.addEventListener("click", () => { state.ui.drawerOpen=false; applyUI(); save(); });
 
-        $("focusToggle").addEventListener("click", toggleFocus);
+        $("focusToggle")?.addEventListener("click", toggleFocus);
 
-        $("preset").addEventListener("change", () => {
-          const v = $("preset").value;
-          if(!v) return;
-          const [r,c] = v.split("x").map(Number);
-          if(Number.isFinite(r) && Number.isFinite(c)){
-            $("rows").value = r;
-            $("cols").value = c;
-            state.editor = { rows: r, cols: c, numbers: [] };
-            save();
-          }
-        });
+        const presetEl = $("preset");
+        if(presetEl){
+          presetEl.addEventListener("change", () => {
+            const v = presetEl.value;
+            if(!v) return;
+            const [r,c] = v.split("x").map(Number);
+            if(Number.isFinite(r) && Number.isFinite(c)){
+              $("rows").value = r;
+              $("cols").value = c;
+              state.editor = { rows: r, cols: c, numbers: [] };
+              save();
+            }
+          });
+        }
 
-        $("editGridBtn").addEventListener("click", () => {
+        $("editGridBtn")?.addEventListener("click", () => {
           const rows = clampInt($("rows").value, 1, 40);
           const cols = clampInt($("cols").value, 1, 40);
           $("modalTitle").textContent = "Éditer la grille (création)";
@@ -1255,28 +1249,29 @@ else drawer.classList.remove("open");
           openModal();
         });
 
-        $("createBtn").addEventListener("click", createBoard);
-        $("filterBoards").addEventListener("input", renderBoards);
+        $("createBtn")?.addEventListener("click", createBoard);
+        const filterBoardsEl = $("filterBoards");
+        if(filterBoardsEl) filterBoardsEl.addEventListener("input", renderBoards);
 
-        $("ruleMode").addEventListener("change", () => { applyUI(); save(); renderBoards(); });
-        $("showZeros").addEventListener("change", () => { applyUI(); save(); renderBoards(); });
+        $("ruleMode")?.addEventListener("change", () => { applyUI(); save(); renderBoards(); });
+        $("showZeros")?.addEventListener("change", () => { applyUI(); save(); renderBoards(); });
 
-        $("exportBtn").addEventListener("click", exportJSON);
-        $("importBtn").addEventListener("click", () => $("fileInput").click());
-        $("fileInput").addEventListener("change", (e) => {
+        const exportBtn = $("exportBtn"); if(exportBtn) exportBtn.addEventListener("click", exportJSON);
+        const importBtn = $("importBtn"); if(importBtn) importBtn.addEventListener("click", () => $("fileInput").click());
+        const fileInput = $("fileInput"); if(fileInput) fileInput.addEventListener("change", (e) => {
           const f = e.target.files?.[0];
           if(f) importJSONFile(f);
           e.target.value = "";
         });
 
-        $("resetAllBtn").addEventListener("click", resetAll);
+        $("resetAllBtn")?.addEventListener("click", resetAll);
 
-        $("applyGridBtn").addEventListener("click", applyEditor);
-        $("fillFromBulkBtn").addEventListener("click", fillEditorFromBulk);
-        $("clearEditorBtn").addEventListener("click", clearEditor);
+        $("applyGridBtn")?.addEventListener("click", applyEditor);
+        $("fillFromBulkBtn")?.addEventListener("click", fillEditorFromBulk);
+        $("clearEditorBtn")?.addEventListener("click", clearEditor);
 
-        $("modalClose").addEventListener("click", closeModal);
-        $("modal").addEventListener("click", (e) => { if(e.target.id === "modal") closeModal(); });
+        $("modalClose")?.addEventListener("click", closeModal);
+        $("modal")?.addEventListener("click", (e) => { if(e.target.id === "modal") closeModal(); });
 
         window.addEventListener("keydown", (e) => {
           const tag = document.activeElement?.tagName?.toLowerCase?.() || "";
