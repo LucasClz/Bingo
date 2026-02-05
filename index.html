@@ -297,7 +297,7 @@
         overflow: auto;
         -webkit-overflow-scrolling: touch;
       }
-      body.sidebar-open .sidebar{ transform: translateX(0); }
+      body.sidebar-open .sidebar{ transform: translateX(0); background: linear-gradient(180deg, rgba(8,12,20,0.98), rgba(12,16,24,0.98)); }
       #mobileOverlay{ display:none; }
       body.sidebar-open #mobileOverlay{ display:block; position:fixed; inset:0; background: rgba(0,0,0,.45); z-index: 65; }
       /* prevent body from scrolling when sidebar overlay is open */
@@ -327,7 +327,7 @@
       /* Make sidebar hidden by default on phones (toggle via menu)
          and present as overlay when opened */
       .sidebar{ position: fixed; left: 0; top: var(--headerH); bottom: calc(var(--safe-bottom)); width: 88%; max-width: 360px; transform: translateX(-110%); transition: transform .25s ease; box-shadow: 0 12px 40px rgba(0,0,0,.6); z-index: 70; background: linear-gradient(180deg, var(--card), var(--card2)); }
-      body.sidebar-open .sidebar{ transform: translateX(0); }
+      body.sidebar-open .sidebar{ transform: translateX(0); background: linear-gradient(180deg, rgba(8,12,20,0.98), rgba(12,16,24,0.98)); }
       #mobileOverlay{ display:none; }
       body.sidebar-open #mobileOverlay{ display:block; position:fixed; inset:0; background: rgba(0,0,0,.45); z-index: 65; }
 
