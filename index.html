@@ -527,10 +527,10 @@
     </div>
 
     <div class="cluster">
-      <div class="input" title="Entrée = cocher">
-        <input id="drawInput" type="number" inputmode="numeric" placeholder="Numéro…" />
-        <span class="hint">Entrée</span>
-      </div>
+      <form id="drawForm" class="input" title="Entrée = cocher">
+          <input id="drawInput" type="tel" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" placeholder="Numéro…" />
+          <span class="hint">Entrée</span>
+        </form>
 
       <button class="btn-primary" id="drawBtn">Cocher</button>
       <button class="btn-ghost" id="removeBtn">Décocher</button>
@@ -1216,6 +1216,14 @@ else drawer.classList.remove("open");
         $("randomBtn").addEventListener("click", randomDraw);
 
         $("drawInput").addEventListener("keydown", (e) => { if(e.key === "Enter"){ e.preventDefault(); $("drawBtn").click(); } });
+
+        // submit from mobile keyboard (form submit / Enter key)
+        $("drawForm")?.addEventListener("submit", (e) => {
+          e.preventDefault();
+          addDraw($("drawInput").value);
+          $("drawInput").value = "";
+          $("drawInput").focus();
+        });
 
         $("maxNumber")?.addEventListener("change", () => { renderNumbersGrid(); save(); });
 
