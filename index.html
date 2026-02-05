@@ -270,6 +270,39 @@
       gap: 14px;
     }
 
+    /* Mobile-specific ergonomic tweaks */
+    @media (max-width: 600px){
+      .header{ padding: calc(6px + var(--safe-top)) 10px 6px 10px; }
+      .brand{ font-size:13px; }
+      .logo{ width:24px; height:24px; font-size:13px; }
+      .cluster{ gap:6px; }
+      .pill{ padding:4px 6px; font-size:11px; }
+
+      /* Make sidebar hidden by default on phones (toggle via menu)
+         and present as overlay when opened */
+      .sidebar{ position: fixed; left: 0; top: var(--headerH); bottom: calc(var(--safe-bottom)); width: 88%; max-width: 360px; transform: translateX(-110%); transition: transform .25s ease; box-shadow: 0 12px 40px rgba(0,0,0,.6); z-index: 70; background: linear-gradient(180deg, var(--card), var(--card2)); }
+      body.sidebar-open .sidebar{ transform: translateX(0); }
+      #mobileOverlay{ display:none; }
+      body.sidebar-open #mobileOverlay{ display:block; position:fixed; inset:0; background: rgba(0,0,0,.45); z-index: 65; }
+
+      /* Boards: force single column and shrink cells to fit many columns */
+      .boards{ grid-template-columns: 1fr; }
+      .board .title strong{ font-size: 12px; }
+      table.ticket{ table-layout: fixed; width:100%; border-spacing: 4px; }
+      table.ticket td{ padding: 6px 6px; font-size: 12px; border-radius: 8px; }
+      table.ticket td.empty{ opacity: 0.6; }
+
+      /* make action buttons finger-friendly */
+      .actions{ gap:8px; }
+      .actions > button{ min-width: 0; padding: 12px 10px; }
+
+      /* reduce editor / modal sizing */
+      #modal .inner{ margin: 16px auto; width: calc(100% - 32px); }
+
+      /* numbers grid fewer columns on narrow screens */
+      .numbers-grid{ grid-template-columns: repeat(8, minmax(0, 1fr)); }
+    }
+
     /* Focus rules */
     body.focus .content{ grid-template-columns: 1fr; }
     body.focus .sidebar{ display:none; }
@@ -436,6 +469,7 @@
 
 <body>
   <div class="header" id="header">
+    <button class="btn-ghost" id="mobileMenuBtn" style="display:none;">☰</button>
     <div class="brand">
       <div class="logo">🎱</div>
       Bingo Studio
@@ -601,6 +635,7 @@
 
   <input id="fileInput" type="file" accept="application/json" style="display:none;" />
   <div class="toast" id="toast"></div>
+  <div id="mobileOverlay"></div>
 
   <script>
     window.addEventListener("DOMContentLoaded", () => {
@@ -1200,6 +1235,22 @@ else drawer.classList.remove("open");
             if(e.key === "/"){ e.preventDefault(); $("filterBoards").focus(); }
           }
         });
+
+        // Mobile sidebar toggle
+        const mobileMenuBtn = $("mobileMenuBtn");
+        const mobileOverlay = $("mobileOverlay");
+        // show button only on small screens
+        const setMobileMenuVisible = () => {
+          if(window.innerWidth <= 600) mobileMenuBtn.style.display = "inline-flex";
+          else mobileMenuBtn.style.display = "none";
+        };
+        setMobileMenuVisible();
+        window.addEventListener('resize', setMobileMenuVisible);
+
+        mobileMenuBtn.addEventListener('click', () => {
+          document.body.classList.toggle('sidebar-open');
+        });
+        if(mobileOverlay){ mobileOverlay.addEventListener('click', () => document.body.classList.remove('sidebar-open')); }
       }
 
       load();
