@@ -477,7 +477,7 @@
       display:none;
       position:fixed;
       inset:0;
-      z-index:60;
+      z-index:220;
       background: rgba(0,0,0,.62);
       padding: 16px;
     }
@@ -498,6 +498,17 @@
     }
     #modal .mb{ padding: 12px; }
     #editorGrid{ display:grid; gap: 8px; }
+    /* larger editor inputs for mobile ergonomics */
+    #editorGrid input{
+      width:100%;
+      padding: 10px 8px;
+      font-size: 16px;
+      text-align: center;
+      border-radius: 8px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.02);
+      color: var(--text);
+    }
 
     .toast{
       position: fixed;
@@ -576,18 +587,7 @@
           <!-- Préset supprimé pour mobile -->
 
           <div class="divider"></div>
-
-          <div class="help">
-            <strong>Remplir les nombres :</strong><br>
-            • “Éditer la grille” (case par case)<br>
-            • ou colle une liste (espaces/virgules/retours ligne)
-          </div>
-
-          <div class="actions" style="margin-top:10px;">
-            <button class="btn-ghost" id="editGridBtn">Éditer la grille</button>
-          </div>
-
-          <!-- Liste (optionnel) supprimée -->
+          <!-- 'Remplir les nombres' helper removed for mobile; editing available via 'Créer' then 'Modifier' -->
 
           <div class="actions" style="margin-top:10px;">
             <button class="btn-success" id="createBtn">Créer</button>
@@ -1014,7 +1014,13 @@
       }
 
       // Modal editor
-      function openModal(){ $("modal").style.display = "block"; }
+      function openModal(){ $("modal").style.display = "block"; 
+        // focus first editor input when modal opens
+        setTimeout(() => {
+          const first = $("editorGrid")?.querySelector("input");
+          if(first) first.focus();
+        }, 50);
+      }
       function closeModal(){ $("modal").style.display = "none"; }
 
       function buildEditorGrid(rows, cols, seedNumbers){
@@ -1041,8 +1047,20 @@
           inp.placeholder = "…";
           inp.value = state.editor.numbers[i] ?? "";
           inp.addEventListener("input", () => {
-            const v = inp.value === "" ? "" : Number(inp.value.replace(/[^0-9-]/g, ""));
+            const raw = inp.value || "";
+            const cleaned = raw.replace(/[^0-9-]/g, "");
+            const v = cleaned === "" ? "" : Number(cleaned);
             state.editor.numbers[i] = (v === "" || v === null || v === undefined) ? "" : v;
+          });
+          // navigate to next input on Enter, and apply on last
+          inp.addEventListener("keydown", (e) => {
+            if(e.key === "Enter"){
+              e.preventDefault();
+              const inputs = Array.from(grid.querySelectorAll("input"));
+              const idx = inputs.indexOf(inp);
+              if(idx >= 0 && idx < inputs.length - 1){ inputs[idx+1].focus(); }
+              else { const applyBtn = $("applyGridBtn"); if(applyBtn) applyBtn.click(); }
+            }
           });
           grid.appendChild(inp);
         }
