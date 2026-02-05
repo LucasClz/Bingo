@@ -2,12 +2,15 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Bingo Studio</title>
 
   <style>
     :root{
       --bg0:#070b14; --bg2:#0f1930;
+      /* safe-area insets for iOS (fallback to 0) */
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
       --card: rgba(255,255,255,.06);
       --card2: rgba(255,255,255,.04);
       --text:#eef2ff; --muted:#a7b2c8;
@@ -28,6 +31,7 @@
     *{ box-sizing:border-box; }
     html,body{ height:100%; }
 
+    /* Ensure content respects device safe-areas (home indicator / notch) */
     body{
       margin:0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
@@ -37,6 +41,12 @@
         radial-gradient(900px 520px at 90% 0%, rgba(52,211,153,.16), transparent 55%),
         linear-gradient(180deg, var(--bg2), var(--bg0));
       overflow-y:auto;
+      -webkit-overflow-scrolling: touch;
+      min-height: 100vh;
+      /* avoid the OS bottom chrome showing through UI elements */
+      padding-bottom: calc(var(--safe-bottom) + 8px);
+      background-color: var(--bg0);
+      background-attachment: fixed;
     }
 
     /* HEADER (compact) */
@@ -47,7 +57,8 @@
       backdrop-filter: blur(16px);
       background: rgba(7,11,20,.74);
       border-bottom: 1px solid rgba(255,255,255,.08);
-      padding: 8px 12px;               /* ✅ moins haut */
+      /* respect the notch / status-bar on small devices */
+      padding: calc(8px + var(--safe-top)) 12px 8px 12px;
       display:flex;
       gap: 8px;
       align-items:center;
@@ -176,6 +187,8 @@
       grid-template-columns: 360px 1fr;
       gap: 14px;
       padding: 14px;
+      /* ensure bottom spacing avoids the home indicator */
+      padding-bottom: calc(14px + var(--safe-bottom));
       align-items:start;
     }
     @media (max-width: 980px){
@@ -406,7 +419,7 @@
     .toast{
       position: fixed;
       right: 14px;
-      bottom: 14px;
+      bottom: calc(14px + var(--safe-bottom));
       max-width: 420px;
       padding: 10px 12px;
       border-radius: 12px;
@@ -442,8 +455,8 @@
       <button class="btn-success" id="randomBtn">Aléatoire</button>
 
       <span class="pill">Max
-        <input id="maxNumber" type="number" value="90" min="1" max="999"
-               style="width:72px; padding:5px 8px; border-radius:10px;">
+        <input id="maxNumber" type="number" value="99" min="1" max="999"
+             style="width:72px; padding:5px 8px; border-radius:10px;">
       </span>
 
       <button class="btn-ghost" id="drawerToggle" title="G">Tableau</button>
@@ -852,7 +865,7 @@
       }
 
       function renderNumbersGrid(){
-        const max = clampInt($("maxNumber").value || 90, 1, 999);
+        const max = clampInt($("maxNumber").value || 99, 1, 999);
         const grid = $("numbersGrid");
         grid.innerHTML = "";
         for(let n=1;n<=max;n++){
@@ -913,7 +926,7 @@
       }
 
       function randomDraw(){
-        const max = clampInt($("maxNumber").value || 90, 1, 999);
+        const max = clampInt($("maxNumber").value || 99, 1, 999);
         const candidates = [];
         for(let i=1;i<=max;i++) if(!state.drawn.has(i)) candidates.push(i);
         if(candidates.length === 0) return;
@@ -1095,8 +1108,9 @@
         else document.body.classList.remove("focus");
 
         const drawer = $("drawer");
-        if(state.ui.drawerOpen) drawer.classList.add("open");
-        else drawer.classList.remove("open");
+if(state.ui.drawerOpen) drawer.classList.add("open");
+else drawer.classList.remove("open");
+
 
         state.ui.showZeros = ($("showZeros").value === "yes");
         state.ui.ruleMode = $("ruleMode").value;
@@ -1202,4 +1216,3 @@
   </script>
 </body>
 </html>
-
