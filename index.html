@@ -498,16 +498,19 @@
     }
     #modal .mb{ padding: 12px; }
     #editorGrid{ display:grid; gap: 8px; }
-    /* larger editor inputs for mobile ergonomics */
+    /* editor inputs: match display size of plaquette cells for consistency */
     #editorGrid input{
       width:100%;
-      padding: 10px 8px;
-      font-size: 16px;
+      padding: 6px 4px;
+      font-size: 11px;
+      font-weight: 900;
       text-align: center;
-      border-radius: 8px;
+      border-radius: 6px;
       border:1px solid rgba(255,255,255,.08);
       background: rgba(255,255,255,.02);
       color: var(--text);
+      height: 30px;
+      box-sizing: border-box;
     }
 
     .toast{
@@ -668,7 +671,6 @@
         <div id="editorGrid"></div>
         <div class="actions" style="margin-top:12px;">
           <button class="btn-primary" id="applyGridBtn">Appliquer</button>
-          <button class="btn-ghost" id="fillFromBulkBtn">Depuis la liste</button>
           <button class="btn-danger" id="clearEditorBtn">Vider</button>
         </div>
       </div>
@@ -1130,16 +1132,25 @@
       function applyEditor(){
         const rows = clampInt($("rows").value, 1, 40);
         const cols = clampInt($("cols").value, 1, 40);
+        const total = rows * cols;
+        let nums = numbersFromEditor();
+        if(nums.length < total) nums = nums.concat(new Array(total - nums.length).fill(0));
+        nums = nums.slice(0, total);
 
-        if(mode === "create"){ closeModal(); return; }
+        if(mode === "create"){
+          const name = ($("boardName").value || "").trim() || `Plaquette ${state.boards.length+1}`;
+          const board = { id: uid(), name, rows, cols, numbers: nums.map(Number), marked: new Array(total).fill(false) };
+          recomputeMarkedForBoard(board);
+          state.boards.push(board);
+          $("boardName").value = "";
+          save(); updateStats(); renderBoards();
+          mode = "create"; editingId = null;
+          closeModal();
+          return;
+        }
 
         const b = state.boards.find(x => x.id === editingId);
         if(!b){ closeModal(); return; }
-
-        const total = rows*cols;
-        let nums = numbersFromEditor();
-        if(nums.length < total) nums = nums.concat(new Array(total - nums.length).fill(0));
-        nums = nums.slice(0,total);
 
         b.rows = rows;
         b.cols = cols;
@@ -1281,7 +1292,16 @@ else drawer.classList.remove("open");
           openModal();
         });
 
-        $("createBtn")?.addEventListener("click", createBoard);
+        $("createBtn")?.addEventListener("click", () => {
+          // open editor modal in creation mode so user can fill numbers before creating
+          const rows = clampInt($("rows").value, 1, 40);
+          const cols = clampInt($("cols").value, 1, 40);
+          $("modalTitle").textContent = "Créer la plaquette";
+          buildEditorGrid(rows, cols);
+          mode = "create";
+          editingId = null;
+          openModal();
+        });
         const filterBoardsEl = $("filterBoards");
         if(filterBoardsEl) filterBoardsEl.addEventListener("input", renderBoards);
 
