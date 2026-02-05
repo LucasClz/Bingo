@@ -838,7 +838,7 @@
       function renderBoards(){
         const wrap = $("boards");
         wrap.innerHTML = "";
-        const filter = ($("filterBoards").value || "").trim().toLowerCase();
+        const filter = (($("filterBoards")?.value) || "").trim().toLowerCase();
         const list = state.boards.filter(b => !filter || (b.name||"").toLowerCase().includes(filter));
 
         if(list.length === 0){
@@ -1280,7 +1280,7 @@ else drawer.classList.remove("open");
           if(!typing){
             if(e.key.toLowerCase() === "f"){ e.preventDefault(); toggleFocus(); }
             if(e.key.toLowerCase() === "g"){ e.preventDefault(); toggleDrawer(); }
-            if(e.key === "/"){ e.preventDefault(); $("filterBoards").focus(); }
+            if(e.key === "/"){ e.preventDefault(); const fb = $("filterBoards"); if(fb) fb.focus(); }
           }
         });
 
